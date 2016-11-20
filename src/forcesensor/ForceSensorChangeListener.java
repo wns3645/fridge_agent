@@ -1,4 +1,4 @@
-package listener;
+package forcesensor;
 
 import com.phidgets.event.SensorChangeListener;
 import com.phidgets.event.SensorChangeEvent;

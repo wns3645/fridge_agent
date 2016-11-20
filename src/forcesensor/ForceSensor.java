@@ -1,88 +1,76 @@
+package forcesensor;
 
 import com.phidgets.*;
 import com.phidgets.event.*;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-
-import listener.*;
-
 import java.util.Arrays;
 import java.util.Date;
 
 public class ForceSensor {
-
+	InterfaceKitPhidget ik;
+	BufferedWriter output;
+	BufferedWriter result;
+	ForceSensorChangeListener sensor_listener;
 	
-	public static final void main(String args[]) throws Exception{
-	    InterfaceKitPhidget ik;
-	    InterfaceKitPhidget ik2;
+	public 	ForceSensor(int serial_number, String output_file, String result_file) throws Exception{
 	    
 	    System.out.println(Phidget.getLibraryVersion()); 
 
-	    ik = new InterfaceKitPhidget();
-	    ik2 = new InterfaceKitPhidget();
+	    this.ik = new InterfaceKitPhidget();
 	    
 	    //make output file
-	    BufferedWriter output1 = new BufferedWriter(new FileWriter("./output1.csv"));
-	    BufferedWriter output2 = new BufferedWriter(new FileWriter("./output2.csv"));
+	    this.output = new BufferedWriter(new FileWriter(output_file));
 	    
 	    String data = "time, sensor0, sensor1, sensor2, sensor3, sensor4, sensor5, sensor6, sensor7";
 
-	    initialize_output(output1, data);
-	    initialize_output(output2, data);
+	    initialize_output(output, data);
 
-	  	event_declare(ik); 
-		ForceSensorChangeListener sensor_listener1 = new ForceSensorChangeListener();
-		ik.addSensorChangeListener(sensor_listener1);
-
-	    event_declare(ik2);
-		ForceSensorChangeListener sensor_listener2 = new ForceSensorChangeListener();
-		ik2.addSensorChangeListener(sensor_listener2);
-
+	  	event_declare(this.ik); 
+		sensor_listener = new ForceSensorChangeListener();
+		ik.addSensorChangeListener(sensor_listener);
 		
-		ik.open(172121);
-		ik2.open(28975);
-		
+		ik.open(serial_number);
+
 	    System.out.println("waiting for Interfacekit attachment...");
 	    ik.waitForAttachment();
-	    ik2.waitForAttachment();
 
-	    System.out.println(Arrays.toString(sensor_listener1.value_list));
+	    System.out.println(Arrays.toString(sensor_listener.value_list));
 	    System.out.println(ik.getDeviceName());
 
 	    Thread.sleep(500);
 		
         Date time = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a"); 
-        BufferedWriter result1 = new BufferedWriter(new FileWriter("./result1.csv"));
-        BufferedWriter result2 = new BufferedWriter(new FileWriter("./result2.csv"));
+        this.result = new BufferedWriter(new FileWriter(result_file));
 
-        initialize_result(result1, sensor_listener1, data, sdf, time);
-        initialize_result(result2, sensor_listener2, data, sdf, time);
-	    
-        long current_time = System.currentTimeMillis();
+        initialize_result(result, this.sensor_listener, data, sdf, time);
+        
+	}
+	
+	public void forceSensing() throws Exception{
+       
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a"); 
+		long current_time = System.currentTimeMillis();
 	    
 	    while(true){
 	    	
 	    	Thread.yield();
     		current_time = System.currentTimeMillis();
  
-    		make_result(result1, sensor_listener1, sdf);
-    		make_result(result2, sensor_listener2, sdf);
+    		make_result(result, sensor_listener, sdf);
     	
-	    	if(current_time-sensor_listener1.complete_time>=5000)
+	    	if(current_time-sensor_listener.complete_time>=5000)
     		{
 	    		break;
     		}
 	    }
 	    
 	    System.out.println("Closing...");
-	    result1.close();   //result close
-	    result2.close();
+	    result.close();   //result close
 	    ik.close();
-	    ik2.close();
 	    ik = null;
-	    ik2 = null;   	//deallocate
 	}
 	
 	public static int find_section(int[] value_list, int[] prev_value, int highest){
@@ -172,7 +160,7 @@ public class ForceSensor {
 	
 	public static void event_declare(InterfaceKitPhidget ik){
 		
-		ik.addAttachListener(new AttachListener() {
+		   ik.addAttachListener(new AttachListener() {
 		      public void attached(AttachEvent ae) {
 		        System.out.println("attachment of " + ae);
 		      }

@@ -1,6 +1,8 @@
 
+.*
+!.gitignore
 
 *.csv
 bin/
 
-
+*.jpg
