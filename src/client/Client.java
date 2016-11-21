@@ -6,31 +6,28 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.net.Socket;
-import java.util.Scanner;
  
 public class Client{
 	Socket client_socket;
 	
 	public Client() throws Exception{
-		 this.client_socket = new Socket("127.0.0.1",9027); // ip: 127.0.0.1, port: 9027
-	     System.out.println("Client Start!");        
+		 this.client_socket = new Socket("143.248.57.88",9030);//연구실 컴퓨터.
+	     System.out.println("Client Start! Server connected");        
 	}
 	
-    public void send_file() throws Exception{
+    public void send_file(String file_name) throws Exception{
         OutputStream out;
         FileInputStream fin;
-        
+                
         out =client_socket.getOutputStream();                 
         DataOutputStream dout = new DataOutputStream(out); 
         
-        Scanner s = new Scanner(System.in);  
-             
-        while(true){
-            String filename = s.next();   
+       // Scanner s = new Scanner(System.in);  
+            //String filename = s.next();   
             
-            try{
-            	
-        	fin = new FileInputStream(new File(filename)); 
+        try{
+        	
+        	fin = new FileInputStream(new File(file_name)); 
         
 	        byte[] buffer = new byte[1024];     
 	        int len;                              
@@ -43,9 +40,9 @@ public class Client{
 	        int datas = data;                     
 	 
 	        fin.close();
-	        fin = new FileInputStream(filename);  
+	        fin = new FileInputStream(file_name);  
 	        dout.writeInt(data);                  
-	        dout.writeUTF(filename);               
+	        dout.writeUTF(file_name);               
 	        
 	         len = 0;
 	        
@@ -54,14 +51,12 @@ public class Client{
 	            out.write(buffer,0,len);       
 	        }
 	        
-	        System.out.println("Filename: " +filename + ", " +datas+" kbytes of files is sent.");
-            }
-            catch(FileNotFoundException e){
-	        	System.out.println("Exception: " + e);
-	        	this.client_socket.close();
-	        	s.close();
-	        }
-     
-        }      
+	        System.out.println("Filename: " +file_name + ", " +datas+" kbytes of files is sent.");
+        }
+        catch(FileNotFoundException e){
+        	System.out.println("Exception: " + e);
+        	client_socket.close();
+        }
+   
     }
 }

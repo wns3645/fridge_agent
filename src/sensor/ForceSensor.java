@@ -1,4 +1,4 @@
-package forcesensor;
+package sensor;
 
 import com.phidgets.*;
 import com.phidgets.event.*;
@@ -10,8 +10,8 @@ import java.util.Date;
 
 public class ForceSensor {
 	InterfaceKitPhidget ik;
-	BufferedWriter output;
-	BufferedWriter result;
+	String output_file;
+	String result_file;
 	ForceSensorChangeListener sensor_listener;
 	
 	public 	ForceSensor(int serial_number, String output_file, String result_file) throws Exception{
@@ -19,9 +19,10 @@ public class ForceSensor {
 	    System.out.println(Phidget.getLibraryVersion()); 
 
 	    this.ik = new InterfaceKitPhidget();
-	    
+	    this.result_file = result_file;
 	    //make output file
-	    this.output = new BufferedWriter(new FileWriter(output_file));
+	    this.output_file = output_file;
+	    BufferedWriter output = new BufferedWriter(new FileWriter(output_file));
 	    
 	    String data = "time, sensor0, sensor1, sensor2, sensor3, sensor4, sensor5, sensor6, sensor7";
 
@@ -33,44 +34,50 @@ public class ForceSensor {
 		
 		ik.open(serial_number);
 
-	    System.out.println("waiting for Interfacekit attachment...");
+	    System.out.println("waiting for Forcesensor attachment...");
 	    ik.waitForAttachment();
 
 	    System.out.println(Arrays.toString(sensor_listener.value_list));
-	    System.out.println(ik.getDeviceName());
+	    //System.out.println(ik.getDeviceName());
 
 	    Thread.sleep(500);
 		
         Date time = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a"); 
-        this.result = new BufferedWriter(new FileWriter(result_file));
+        BufferedWriter result = new BufferedWriter(new FileWriter(result_file));
 
         initialize_result(result, this.sensor_listener, data, sdf, time);
+        result.close();
         
 	}
 	
 	public void forceSensing() throws Exception{
        
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a"); 
-		long current_time = System.currentTimeMillis();
-	    
-	    while(true){
-	    	
-	    	Thread.yield();
-    		current_time = System.currentTimeMillis();
- 
-    		make_result(result, sensor_listener, sdf);
+    	long current_time = System.currentTimeMillis();
+		
+    	Thread.yield();
+        BufferedWriter result = new BufferedWriter(new FileWriter(result_file, true));
+
+    	if(sensor_listener.state==true)
+    	{
+			result.write(sdf.format(current_time).toString() + ", ");
+			sensor_listener.highest=find_section(sensor_listener.value_list, sensor_listener.prev_value_list, sensor_listener.highest);
+	        for(int i=0; i<7; i++)
+	        {
+	        	result.write(String.valueOf(sensor_listener.value_list[i]));
+	        	result.write(", ");
+	        }
+	        result.write(String.valueOf(sensor_listener.value_list[7]));
+	        result.write(", " + sensor_listener.highest);
+	        result.newLine();
+	        sensor_listener.state=false;
+			System.out.println("result = " + Arrays.toString(sensor_listener.value_list) + ", secton = " + sensor_listener.highest);
+	        System.arraycopy(sensor_listener.value_list, 0, sensor_listener.prev_value_list, 0, 8);			
+    	}
     	
-	    	if(current_time-sensor_listener.complete_time>=5000)
-    		{
-	    		break;
-    		}
-	    }
-	    
-	    System.out.println("Closing...");
-	    result.close();   //result close
-	    ik.close();
-	    ik = null;
+    	result.close();
+    	
 	}
 	
 	public static int find_section(int[] value_list, int[] prev_value, int highest){
@@ -194,6 +201,12 @@ public class ForceSensor {
 //		      }
 //		    });		    
 		
+	}
+	
+	public void close() throws Exception{
+		System.out.println("Closing...");
+	    ik.close();
+	    ik = null;
 	}
 	
 }
