@@ -22,36 +22,38 @@ public class Client{
         out =client_socket.getOutputStream();                 
         DataOutputStream dout = new DataOutputStream(out); 
         
-       // Scanner s = new Scanner(System.in);  
-            //String filename = s.next();   
             
         try{
-        	
-        	fin = new FileInputStream(new File(file_name)); 
+        	File file = new File(file_name);              
+        	fin = new FileInputStream(file); 
         
-	        byte[] buffer = new byte[1024];     
-	        int len;                              
-	        int data=0;                           
+        	int fsize = (int) file.length();
+	        byte[] buffer = new byte[1024];    
 	        
-	        while((len = fin.read(buffer))>0){     
-	            data++;                      
-	        }
+//	        int len;                              
+//	        int data=0;                           
+//	        
+//	        while((len = fin.read(buffer))>0){     
+//	            data++;                      
+//	        }
         
-	        int datas = data;                     
+//	        int datas = data;                     
 	 
-	        fin.close();
-	        fin = new FileInputStream(file_name);  
-	        dout.writeInt(data);                  
+//	        fin.close();
+//	        fin = new FileInputStream(file); 
+//	        System.out.println(data+","+file_name);
+	        
+	        dout.writeInt(fsize);        
 	        dout.writeUTF(file_name);               
 	        
-	         len = 0;
-	        
-	        for(;data>0;data--){                
-	            len = fin.read(buffer);        
-	            out.write(buffer,0,len);       
-	        }
-	        
-	        System.out.println("Filename: " +file_name + ", " +datas+" kbytes of files is sent.");
+	       while(fin.available() > 0){
+	    	   int readsize = fin.read(buffer);
+	    	   out.write(buffer, 0, readsize);
+	       }
+	       
+	       fin.close();
+	       
+	       System.out.println("Filename: " +file_name + ", " +fsize+" kbytes of files is sent.");
         }
         catch(FileNotFoundException e){
         	System.out.println("Exception: " + e);

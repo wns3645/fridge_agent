@@ -3,7 +3,6 @@ package sensor;
 import com.phidgets.*;
 import com.phidgets.event.*;
 import client.*;
-import sensor.*;
 
 
 public class SwitchSensor
@@ -68,14 +67,14 @@ public class SwitchSensor
 							//take a photo by using web cam. --> access to shell command.  // "sudo mplayer -vo png -frames 1 tv:///dev/video0"
 							//send it to server by using socket.
 							try{
-								//System.out.println("abcdq");
 								String zero = "";
 								photo_num ++;
 								for(int zero_num=0; zero_num<7-photo_num/10; zero_num++)
 								{
 									zero = zero + "0";
 								}
-								client.send_file( zero+String.valueOf(photo_num)+".png");
+								//client.send_file( zero+String.valueOf(photo_num)+".png");
+								client.send_file("00000001.png");
 								force.forceSensing();
 							}
 							catch(Exception e){
