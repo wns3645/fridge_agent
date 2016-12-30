@@ -14,6 +14,7 @@ public class ForceSensor {
 	String result_file;
 	ForceSensorChangeListener sensor_listener;
 	
+	//constructor
 	public 	ForceSensor(int serial_number, String output_file, String result_file) throws Exception{
 	    
 	    System.out.println(Phidget.getLibraryVersion()); 
@@ -51,7 +52,7 @@ public class ForceSensor {
         
 	}
 	
-	public void forceSensing() throws Exception{
+	public int[] forceSensing() throws Exception{
        
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a"); 
     	long current_time = System.currentTimeMillis();
@@ -59,53 +60,70 @@ public class ForceSensor {
     	Thread.yield();
         BufferedWriter result = new BufferedWriter(new FileWriter(result_file, true));
 
-    	if(sensor_listener.state==true)
-    	{
-			result.write(sdf.format(current_time).toString() + ", ");
-			sensor_listener.highest=find_section(sensor_listener.value_list, sensor_listener.prev_value_list, sensor_listener.highest);
-	        for(int i=0; i<7; i++)
-	        {
-	        	result.write(String.valueOf(sensor_listener.value_list[i]));
-	        	result.write(", ");
-	        }
-	        result.write(String.valueOf(sensor_listener.value_list[7]));
-	        result.write(", " + sensor_listener.highest);
-	        result.newLine();
-	        sensor_listener.state=false;
-			System.out.println("result = " + Arrays.toString(sensor_listener.value_list) + ", secton = " + sensor_listener.highest);
-	        System.arraycopy(sensor_listener.value_list, 0, sensor_listener.prev_value_list, 0, 8);			
-    	}
+		result.write(sdf.format(current_time).toString() + ", ");
+		int[] from_to_section = new int[2];
+		from_to_section=find_section(sensor_listener.value_list, sensor_listener.prev_value_list);
+        for(int i=0; i<7; i++)
+        {
+        	result.write(String.valueOf(sensor_listener.value_list[i]));
+        	result.write(", ");
+        }
+        result.write(String.valueOf(sensor_listener.value_list[7]));
+        result.write(", " + from_to_section[0]);
+        result.write(", " + from_to_section[1]);
+        result.newLine();
+        sensor_listener.state=false;
+		System.out.println("result = " + Arrays.toString(sensor_listener.value_list) + ", from secton = " + from_to_section[0] + ", to section = " + from_to_section[1]);
+        System.arraycopy(sensor_listener.value_list, 0, sensor_listener.prev_value_list, 0, 8);			
+	
     	
     	result.close();
     	
+    	return from_to_section;
+    	
 	}
 	
-	public static int find_section(int[] value_list, int[] prev_value, int highest){
+	
+	public static int[] find_section(int[] value_list, int[] prev_value){
 		
 		int total_delta=0;
-		for (int i=0; i<8; i++)
+		int max_pos=0;
+		int min_pos=0;
+		int[] delta_value = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+		int[] ret_value = {-1, -1};
+		
+		for (int i=1; i<9; i++)
 		{
-			total_delta += Math.abs(value_list[i]-prev_value[i]);
+			total_delta += Math.abs(value_list[i-1]-prev_value[i-1]);
+			delta_value[i] = value_list[i-1] - prev_value[i-1];
 		}
 		
+		System.out.println("total delta: "+total_delta);
 		if(total_delta < 50)
 		{
-			return highest;
+			return ret_value;
 		}
-		else if(highest == -1)
-			highest = 0;
 		
-		for (int i=0; i<8; i++)
+		for (int i=0; i<9; i++)
 		{
-			if(value_list[highest]-prev_value[highest]<value_list[i]-prev_value[i])
+			if(delta_value[max_pos]<delta_value[i])
 			{
-				highest = i;
+				if(delta_value[i] > 50)
+					max_pos = i;
+			}
+			
+			if(delta_value[min_pos]>delta_value[i])
+			{
+				if(delta_value[i] < -50)
+					min_pos = i;
 			}
 		}
-		
-		return highest;
+		ret_value[0] = min_pos-1;
+		ret_value[1] = max_pos-1;
+		return ret_value;
 	}
 	
+	//이거는 이제 필요 없음. 신경쓰지 마3
 	public static void make_result (BufferedWriter result, ForceSensorChangeListener sensor_listener, SimpleDateFormat sdf) throws IOException
 	{
 	    long current_time = System.currentTimeMillis();
@@ -117,26 +135,22 @@ public class ForceSensor {
 	    		if(current_time-sensor_listener.complete_time>=2000)  //if 2secs are passed from completion
 	    		{
 	    			result.write(sdf.format(current_time).toString() + ", ");
-	    			sensor_listener.highest=find_section(sensor_listener.value_list, sensor_listener.prev_value_list, sensor_listener.highest);
+	    			//sensor_listener.curr_section=find_section(sensor_listener.value_list, sensor_listener.prev_value_list, sensor_listener.curr_section);
 	    	        for(int i=0; i<7; i++)
 	    	        {
 	    	        	result.write(String.valueOf(sensor_listener.value_list[i]));
 	    	        	result.write(", ");
 	    	        }
 	    	        result.write(String.valueOf(sensor_listener.value_list[7]));
-	    	        result.write(", " + sensor_listener.highest);
+	    	        result.write(", " + sensor_listener.curr_section);
 	    	        result.newLine();
 	    	        sensor_listener.state=false;
-	    			System.out.println("result = " + Arrays.toString(sensor_listener.value_list) + ", secton = " + sensor_listener.highest);
+	    			System.out.println("result = " + Arrays.toString(sensor_listener.value_list) + ", secton = " + sensor_listener.curr_section);
 	    	        System.arraycopy(sensor_listener.value_list, 0, sensor_listener.prev_value_list, 0, 8);
 	    		}
 	    			
     	}
     	
-//    	if(current_time-ForceSensorChangeListener.complete_time>=5000)
-//		{
-//    		break;
-//		}
 	}
 	
 	public static void initialize_output (BufferedWriter output, String data) throws IOException{
@@ -151,7 +165,7 @@ public class ForceSensor {
 	
 	public static void initialize_result (BufferedWriter result, ForceSensorChangeListener sensor_listener, String data, SimpleDateFormat sdf, Date time) throws IOException{
 		result.write(data);
-        result.write(", section#");
+        result.write(", from section#, to section#");
         result.newLine();
 	           
         result.write(sdf.format(time).toString() + ", ");
@@ -194,6 +208,7 @@ public class ForceSensor {
 		       // System.out.println(oe);
 		      }
 		    });
+		    //SensorChangeListener에 대한 정의는 ForceSensorChangeListener.java에 새롭게 정의되어 있음.
 //
 //		    ik.addSensorChangeListener(new SensorChangeListener() {
 //		      public void sensorChanged(SensorChangeEvent se) {

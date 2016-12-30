@@ -13,7 +13,7 @@ public class ForceSensorChangeListener implements SensorChangeListener  {
 	public int[] prev_value_list = {0, 0, 0, 0, 0, 0, 0, 0};
 	public int[] value_list = {0, 0, 0, 0, 0, 0, 0, 0};		
 	
-	public int highest = -1;
+	public int curr_section = -1;
 	
     public boolean state=false;
 	public long complete_time=0;
