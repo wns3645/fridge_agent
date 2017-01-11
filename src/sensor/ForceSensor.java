@@ -34,7 +34,6 @@ public class ForceSensor {
 		ik.addSensorChangeListener(sensor_listener);
 		
 		ik.open(serial_number);
-
 	    System.out.println("waiting for Forcesensor attachment...");
 	    ik.waitForAttachment();
 

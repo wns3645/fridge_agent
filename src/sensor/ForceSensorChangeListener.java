@@ -17,6 +17,8 @@ public class ForceSensorChangeListener implements SensorChangeListener  {
 	
     public boolean state=false;
 	public long complete_time=0;
+	
+	public int init=0; // 첫 실행시 prev value 설정
     
 	public void sensorChanged(SensorChangeEvent se){
 		
@@ -24,6 +26,17 @@ public class ForceSensorChangeListener implements SensorChangeListener  {
 		int value = se.getValue();
 		
 		state=false;
+		
+		if(init!=-1)
+		{
+			if (init<=7 && init>=0)
+			{
+				init ++;
+				prev_value_list[index]= value ;
+			}
+			else
+				init = -1;
+		}
 		
 		value_list[index] = value;
 		        

@@ -11,7 +11,7 @@ public class Client{
 	Socket client_socket;
 	
 	public Client() throws Exception{
-		 this.client_socket = new Socket("143.248.57.88",9030);//connect to local.--> 나중에 ip addr 바꾸어야함.
+		 this.client_socket = new Socket("143.248.56.220",9030);
 	     System.out.println("Client Start! Server connected");        
 	}
 	
@@ -41,7 +41,7 @@ public class Client{
 	       }
 	       
 	       fin.close();
-	       
+
 	       System.out.println("Filename: " +file_name + ", " +fsize+" kbytes of files is sent.");
         }
         catch(FileNotFoundException e){
